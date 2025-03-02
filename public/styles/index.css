@@ -7,12 +7,22 @@
         box-sizing: border-box;
     }
 
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100vh;
+    }
+
     :root {
+
+        scroll-behavior: unset;
         color-scheme: dark;
     }
 
     body {
-        background-image: url(/images/fondo_chat.jpg);
+        background-image: url(/public/images/fondo_chat.jpg);
         background-repeat: no-repeat;
         background-size: cover;
         background-position: center;
@@ -20,12 +30,33 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         display: grid;
         place-content: center;
-        height: 93vh;
-        padding: 20px;
         grid-template-rows: 1fr;
     }
 
+    #login {
+        cursor: pointer;
+        top: 20px;
+        color: white;
+        right: 50px;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+        border-radius: 10px;
+        width: 150px;
+        height: 60px;
+        background: transparent;
+        backdrop-filter: blur(10px);
+        font-size: 23px;
+        outline: 0;
+        border: 2px solid #08848A;
+        padding: 5px;
+        transition: .3s;
+    }
+
     #messages {
+        scrollbar-width: none;
         list-style-type: none;
         margin: 0;
         padding: 0;
@@ -39,12 +70,6 @@
         padding: .5rem 1rem 1rem 1rem;
     }
 
-    .tu {
-        display: flex;
-        flex-direction: column;
-        align-items: end;
-    }
-
     #messages>li>p {
         margin: 5px 5px 5px 0;
     }
@@ -52,34 +77,61 @@
     .username {
         margin-left: 5px;
         font-weight: bold;
-        font-size: larger;
+        font-size: 1rem;
     }
 
     .fecha {
         margin: 0 10px 10px 10px;
         font-weight: 300;
-        font-size: x-small;
+        font-size: .7rem;
+    }
+
+    .tu {
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+        margin: 0;
     }
 
     .msg {
         border-radius: 20px;
-        background-color: rgba(11,185,192, .7);
+        background-color: rgba(11, 185, 192, .7);
         width: fit-content;
-        padding: 10px;
-        font-size: small;
+        padding: 10px .5rem 10px .5rem;
+    }
+
+    .msg div {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .msg * {
+        margin: 0;
+    }
+
+    .picture {
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
     }
 
     #chat {
         backdrop-filter: blur(40px);
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        /* border: 1px solid #ccc; */
+        /* border-radius: 4px; */
+        scrollbar-width: none;
         overflow: hidden;
-        width: 80vw;
-        height: 100%;
-        position: relative;
+        position: absolute;
+        top: 100px;
+        right: 0;
+        left: 0;
+        bottom: 0;
+        width: 100%;
     }
 
     #form {
+        background-color: #131313;
         bottom: 0;
         display: flex;
         height: 48px;
@@ -90,7 +142,7 @@
     }
 
     #input {
-        background-color: transparent;
+        background-color: #131313;
         border-radius: 99px;
         border: 1px solid #eee;
         flex: 1;
@@ -103,7 +155,7 @@
     }
 
     #form>button {
-        background-color: rgba(11,185,192, .9);
+        background-color: rgba(11, 185, 192, .9);
         color: #fff;
         border: 0;
         margin: 4px;
@@ -125,11 +177,22 @@
     }
 
     :root {
+        font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
         color-scheme: dark;
     }
 
+    canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+    }
+
     body {
-        background-image: url(/images/fondo_chat.jpg);
+        background-image: url(/public/images/fondo_chat.jpg);
         background-repeat: no-repeat;
         background-size: cover;
         background-position: center;
@@ -153,13 +216,7 @@
     }
 
     #messages>li {
-        padding: .5rem 1rem 1rem 1rem;
-    }
-
-    .tu {
-        display: flex;
-        flex-direction: column;
-        align-items: end;
+        padding: 1rem 1rem .5rem 1rem;
     }
 
     #messages>li>h3 {
@@ -173,33 +230,86 @@
     .username {
         margin-left: 5px;
         font-weight: bold;
-        font-size: larger;
+        font-size: 1.3rem;
     }
 
     .fecha {
         margin: 0 10px 10px 10px;
         font-weight: 300;
-        font-size: smaller;
+        font-size: 1rem;
+    }
+
+    .tu {
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+        margin: 0;
     }
 
     .msg {
         border-radius: 20px;
-        background-color: rgba(11,185,192, .7);
+        background-color: rgba(11, 185, 192, .7);
         width: fit-content;
-        padding: 10px;
+        padding: 10px .5rem 10px .5rem;
+    }
+
+    .msg div {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .msg * {
+        margin: 0;
+    }
+
+    .picture {
+        border-radius: 50%;
+        width: 3rem;
+        height: 3rem;
+    }
+
+    #login {
+        cursor: pointer;
+        top: 20px;
+        color: white;
+        right: 40px;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+        border-radius: 10px;
+        width: 150px;
+        height: 60px;
+        background: transparent;
+        backdrop-filter: blur(10px);
+        font-size: 23px;
+        outline: 0;
+        border: 2px solid #08848A;
+        padding: 5px;
+        transition: .3s;
+    }
+
+    #login:hover {
+        background-color: #08848A;
+        /* scale: 1.1; */
     }
 
     #chat {
+        background-color: #131313;
         backdrop-filter: blur(40px);
         border: 2px solid rgba(255, 255, 255, .2);
         border-radius: 10px;
         overflow: hidden;
-        width: 45vw;
+        width: 70vw;
         height: 100%;
         position: relative;
+        font-size: 25px;
     }
 
     #form {
+        background-color: #131313;
         bottom: 0;
         display: flex;
         height: 48px;
@@ -210,11 +320,11 @@
     }
 
     #input {
-        background-color: transparent;
+        background-color: #131313;
         border-radius: 99px;
-        border: 1px solid #eee;
+        border: 1px solid #08848A;
         flex: 1;
-        margin: 4px;
+        margin: 3px;
         padding: 10px;
     }
 
@@ -223,16 +333,17 @@
     }
 
     #form>button {
-        background-color: #09f;
+        background-color: #08848A;
         color: #fff;
         border: 0;
-        margin: 4px;
+        margin: 3px;
         border-radius: 99px;
         padding: 0 10px;
         cursor: pointer;
+        transition: .2s;
     }
 
     #form>button:hover {
-        background-color: #0cf;
+        scale: 1.1;
     }
 }

@@ -3,28 +3,40 @@ import logger from 'morgan'
 import { Server } from 'socket.io'
 import { createServer } from 'node:http'
 import { createClient } from '@libsql/client'
-import bcrypt from 'bcrypt'
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url';
+import path from 'path';
+import jwt from "jsonwebtoken";
+import axios from 'axios'
+import cors from 'cors';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') })
+
 
 const app = express()
 const server = createServer(app)
 const io = new Server(server)
 
 const db = createClient({
-    url: "libsql://tfg-eloy0133.turso.io",
-    authToken: `ENTER HERE YOUR TURSO DATABASE TOKEN`
+    url: process.env.TURSO_URL,
+    authToken: process.env.TURSO_TOKEN
 })
 
 await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS users (
+        email TEXT PRIMARY KEY,
+        name TEXT,
+        picture TEXT
+    );
+    
     CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT,
         user TEXT,
-        date DATE
-    );
-
-    CREATE TABLE IF NOT EXISTS users (
-        name TEXT PRIMARY KEY,
-        password TEXT
+        date DATE,
+        FOREIGN KEY (user) REFERENCES users(email) ON DELETE CASCADE
     );
 `)
 
@@ -39,8 +51,8 @@ io.on('connection', async (socket) => {
         let result
         try {
             result = await db.execute({
-                sql: 'INSERT INTO messages (content, user, date) VALUES (:message, :user, :date)',
-                args: { message: data.msg, user: socket.handshake.auth.username, date: data.date }
+                sql: 'INSERT INTO messages (content, user, date) VALUES (:message, :userMail, :date)',
+                args: { message: data.msg, userMail: socket.handshake.auth.userMail, date: new Date() }
             })
         } catch (error) {
             console.error(error)
@@ -50,77 +62,27 @@ io.on('connection', async (socket) => {
             msg: data.msg,
             serverOffset: result.lastInsertRowid.toString(),
             username: socket.handshake.auth.username,
-            date: data.date
-        })
+            date: new Date(),
+            picture: socket.handshake.auth.picture
+        })        
     })
 
-    socket.on('register', async (data) => {
-        let result
-        try {
-            result = await db.execute({
-                sql: 'SELECT name FROM users WHERE name = :usuario',
-                args: { usuario: data.usuario }
-            })
-        } catch (error) {
-            console.error(error);
-            return
-        }
-
-        if (result.rows.length > 0) {
-            socket.emit('userRegistered', 'KO')
-        } else {
-            let resultInsert
-            try {
-                const salt = await bcrypt.genSalt()
-                const hashedPassword = await bcrypt.hash(data.password, salt)
-                resultInsert = await db.execute({
-                    sql: 'INSERT INTO users (name, password) VALUES (:name, :password)',
-                    args: { name: data.usuario, password: hashedPassword }
-                })
-            } catch (error) {
-                console.error(error);
-                return
-            }
-
-            if (resultInsert.rowsAffected > 0) {
-                socket.emit('userRegistered', 'OK')
-            }
-        }
-    })
-
-    socket.on('login', async (data) => {
-        let result
-        try {
-            result = await db.execute({
-                sql: 'SELECT * FROM users WHERE name = :name',
-                args: { name: data.usuario }
-            })
-        } catch (error) {
-            console.error(error);
-            return
-        }
-
-        if (result.rows.length > 0) {
-            if (await bcrypt.compare(data.password, result.rows[0].password)) {
-                console.log('la contraseña es correcta');
-                socket.emit('loggedin', 'OK')
-            } else {
-                socket.emit('loggedin', `La contraseña no coincide con el usuario: ${data.usuario}`)
-            }
-        } else {
-            socket.emit('loggedin', `El usuario: ${data.usuario} no existe`)
-        }
-    })
-
-    if (!socket.recovered) {  // <-- si no se ha recuperado de una desconexión
+    if (!socket.recovered) {
         try {
             const results = await db.execute({
-                sql: 'SELECT id, content, user, date FROM messages WHERE id > ?',
+                sql:
+                    'SELECT m.id, m.content, m.date, u.name, u.picture FROM messages m JOIN users u ON m.user = u.email WHERE m.id > ?',
                 args: [socket.handshake.auth.serverOffset ?? 0]
             })
 
             results.rows.forEach(row => {
-                socket.emit('chat message', { msg: row.content, serverOffset: row.id.toString(), username: row.user, date: row.date })
+                socket.emit('chat message', {
+                    msg: row.content,
+                    serverOffset: row.id.toString(),
+                    username: row.name,
+                    date: row.date,
+                    picture: row.picture
+                })
             })
         } catch (error) {
             console.error(error);
@@ -129,17 +91,104 @@ io.on('connection', async (socket) => {
 })
 
 app.use(logger('dev'))
+app.use(cors())
 
-app.use(express.static(process.cwd() + '/public'))
+app.use('/',express.static(process.cwd()))
 
 app.get('/', (req, res) => {
     res.sendFile(process.cwd() + '/public/html/index.html')
 })
 
-app.get('/login', (req, res) => {
-    res.sendFile(process.cwd() + '/public/html/auth.html')
-})
+app.get('/auth/google', (req, res) => {    
+    const auth0Domain = process.env.AUTH0_DOMAIN;
+    const clientId = process.env.AUTH0_CLIENT_ID;
+    const redirectUri = encodeURIComponent('https://chat-app-bon1.onrender.com');
+    const authUrl = `https://${auth0Domain}/authorize?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20profile%20email&connection=google-oauth2`;
+
+    res.json({ authUrl });
+});
+
+app.get('/auth/login', (req, res) => {
+    if (req.headers.authorization) {
+
+        axios.get(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
+            headers: {
+                'Authorization': `Bearer ${req.headers.authorization}`
+            }
+        })
+            .then(response => {
+                register(response.data).then(jwt => res.json({ jwt: jwt }))
+
+            })
+            .catch(error => {
+                console.error('Error al obtener los datos del usuario:', error);
+            });
+    }
+});
+
+app.get("/verify-token", async (req, res) => {
+    if (req.headers.authorization && req.headers.authorization !== "null") {
+        try {
+            const decoded = jwt.verify(req.headers.authorization, process.env.SECRET, { algorithms: ["HS256"] });
+            res.json({ valid: true, userData: decoded });
+
+            /**==== if user from valid jwt is not in DB and there is a valid jwt, 
+             * it means some rows in DB could have been deleted by accident. ====*/
+            /**==== in that case, its good practice to add the user in DB so everything works correctly ====*/
+            const result = await checkUserDB(decoded.email)
+            if (result.rows.length <= 0) {
+                register(decoded)
+            }
+        } catch (error) {
+            console.log("Error at verifying token ", error);
+            res.status(401).json({ valid: false, error: "Invalid token" });
+        }
+    }
+});
 
 server.listen(3000, () => {
     console.log(`Server running on port 3000`);
 })
+
+async function register(data) {
+    let result = await checkUserDB(data.email)
+
+    if (result.rows.length > 0) {
+        console.log(`User with email ${data.email} already exists in DB`)
+    } else {
+        let resultInsert
+        try {
+            resultInsert = await db.execute({
+                sql: 'INSERT INTO users (email, name, picture) VALUES (:email, :name, :picture)',
+                args: { email: data.email, name: data.name, picture: data.picture }
+            })
+        } catch (error) {
+            console.error(error);
+            return
+        }
+
+        if (resultInsert.rowsAffected > 0) {
+            console.log(`User with email ${data.email} added to DB`);
+        }
+    }
+
+    return jwt.sign({
+        email: data.email,
+        name: data.name,
+        picture: data.picture
+    }, process.env.SECRET, { algorithm: 'HS256', expiresIn: "7d" });
+}
+
+async function checkUserDB(email) {
+    let result
+    try {
+        result = await db.execute({
+            sql: 'SELECT email FROM users WHERE email = :email',
+            args: { email: email }
+        })
+    } catch (error) {
+        console.error(error);
+        return
+    }
+    return result
+}
