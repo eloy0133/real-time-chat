@@ -18,3 +18,29 @@ Aplicación web que permite a los usuarios iniciar sesión con Google y enviar m
 
 ## 🌐 **Render**
 - Para usar esta aplicación no es necesario clonar el repositorio puesto que ya está desplegada en render: https://chat-app-bon1.onrender.com
+
+# ¡Puedes probar a enviar un mensaje a la aplicación!
+
+# ENGLISH:
+# 🗨️ Real-Time Chat with Express.js, Socket.io, Turso, and Auth0
+
+This is a web application that allows users to log in with Google and send real-time messages to a server built with Express.js. The messages are stored in a MySQL database hosted on Turso, and Socket.io is used to provide real-time communication.
+
+## 🚀 **Technologies Used**
+- **Express.js**: Manages all server-side logic, including message persistence, client-server communication via WebSockets, authentication and jwt verification endpoints.
+- **Socket.io**: Enables bidirectional, real-time communication between the client and the server.
+- **Turso (MySQL Database)**: Stores all messages, ensuring data persistence.
+- **Auth0**: Provides easy Google authentication, allowing messages to display the user's name and profile picture.
+- **Json Web Tokens (JWT)**: Secure session management from the client side.
+
+## 📌 **Features**
+✔️ Google Sign-In via Auth0.  
+✔️ Real-time messaging with WebSockets.  
+✔️ Message storage using a MySQL database.  
+✔️ Secure authentication and user verification.
+✔️ Secure session management and verification via JWT.
+
+## 🌐 **Render**
+- In order to use this aplication you dont need to clone this repository since it is already deployed in render: https://chat-app-bon1.onrender.com
+
+# Feel free to send a message to the app!
