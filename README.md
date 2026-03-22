@@ -16,10 +16,6 @@ Aplicación web que permite a los usuarios iniciar sesión con Google y enviar m
 ✔️ Autenticación segura y verificación de usuario.  
 ✔️ Manejo y verificación de sesión de forma segura a través de JWT.
 
-### ¡Puedes probar a enviar un mensaje a la aplicación!
-
-
-
 
 # ENGLISH:
 # 🗨️ Real-Time Chat with Express.js, Socket.io, Turso, and Auth0
@@ -39,5 +35,3 @@ This is a web application that allows users to log in with Google and send real-
 ✔️ Message storage using a MySQL database.  
 ✔️ Secure authentication and user verification.  
 ✔️ Secure session management and verification via JWT.
-
-### Feel free to send a message to the app!
